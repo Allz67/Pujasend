@@ -1,4 +1,4 @@
 username,password,role
-admin,admin#1234,admin
-aliakanina,lia,penjual
-pembeli1,uiiaiu,pembeli
+admin,admin#1234,Admin
+aliakanina,lia,Penjual
+pembeli1,uiiaiu,Pembeli
