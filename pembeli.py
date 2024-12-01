@@ -4,7 +4,6 @@ import time
 
 def baca_menu_dari_csv():
     try:
-        # Membaca file stand.csv yang menyimpan data stand dan menu mereka
         menu_df = pd.read_csv("stand.csv")
         return menu_df
     except FileNotFoundError:
@@ -28,13 +27,13 @@ def tampilkan_menu(menu_df, stand):
     print(f"\n=== Menu di Stand {stand.capitalize()} ===")
     stand_menu = menu_df[menu_df["Stand"].str.lower() == stand.lower()]
     if not stand_menu.empty:
-        print(stand_menu[["Nama Menu", "Harga"]].to_string(index=False))  # Tampilkan menu tanpa indeks
+        print(stand_menu[["Nama Menu", "Harga"]].to_string(index=False))  
     else:
         print("Menu kosong. Tidak ada data untuk ditampilkan.")
 
 def tampilkan_stand(stand_df):
     print("\n=== Daftar Stand ===")
-    stands = stand_df["Stand"].unique()  # Ambil nama-nama stand unik
+    stands = stand_df["Stand"].unique()  
     for i, stand in enumerate(stands, start=1):
         print(f"{i}. {stand}")
     return stands
