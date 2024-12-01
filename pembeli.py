@@ -4,11 +4,12 @@ import time
 
 def baca_menu_dari_csv():
     try:
-        menu_df = pd.read_csv("DaftarMenu.csv", header=None, names=["Nama Menu", "Harga"])
+        # Membaca file stand.csv yang menyimpan data stand dan menu mereka
+        menu_df = pd.read_csv("stand.csv")
         return menu_df
     except FileNotFoundError:
-        print("Menu tidak ditemukan. Pastikan file 'DaftarMenu.csv' tersedia.")
-        return pd.DataFrame(columns=["Nama Menu", "Harga"])
+        print("File 'stand.csv' tidak ditemukan.")
+        return pd.DataFrame(columns=["Stand", "Nama Menu", "Harga"])
 
 def baca_voucher_dari_csv():
     try:
@@ -23,12 +24,32 @@ def simpan_orderan_ke_csv(orderan):
         writer = csv.writer(file)
         writer.writerow(orderan)
 
-def tampilkan_menu(menu_df):
-    print("\n=== Daftar Menu ===")
-    if not menu_df.empty:
-        print(menu_df.to_string(index=False))  
+def tampilkan_menu(menu_df, stand):
+    print(f"\n=== Menu di Stand {stand.capitalize()} ===")
+    stand_menu = menu_df[menu_df["Stand"].str.lower() == stand.lower()]
+    if not stand_menu.empty:
+        print(stand_menu[["Nama Menu", "Harga"]].to_string(index=False))  # Tampilkan menu tanpa indeks
     else:
         print("Menu kosong. Tidak ada data untuk ditampilkan.")
+
+def tampilkan_stand(stand_df):
+    print("\n=== Daftar Stand ===")
+    stands = stand_df["Stand"].unique()  # Ambil nama-nama stand unik
+    for i, stand in enumerate(stands, start=1):
+        print(f"{i}. {stand}")
+    return stands
+
+def pilih_stand(stand_df):
+    stands = tampilkan_stand(stand_df)
+    while True:
+        try:
+            pilihan = int(input("\nPilih nomor stand: "))
+            if 1 <= pilihan <= len(stands):
+                return stands[pilihan - 1]
+            else:
+                print("Pilihan tidak valid. Coba lagi.")
+        except ValueError:
+            print("Input harus berupa angka. Coba lagi.")
 
 def animasi_proses():
     print("\nPesanan sedang diproses...", end="", flush=True)
@@ -67,25 +88,32 @@ def buat_pesanan(menu_df):
     voucher_df = baca_voucher_dari_csv()
 
     while True:
-        nama_menu = input("\nMasukkan nama menu (atau ketik 'selesai' untuk checkout): ").lower()
-        if nama_menu == "selesai":
+        stand = pilih_stand(menu_df)
+        tampilkan_menu(menu_df, stand)
+        while True:
+            nama_menu = input("\nMasukkan nama menu (atau ketik 'selesai' untuk checkout): ").lower()
+            if nama_menu == "selesai":
+                break
+            elif nama_menu in menu_df[menu_df["Stand"].str.lower() == stand.lower()]["Nama Menu"].str.lower().values:
+                try:
+                    jumlah = int(input(f"Masukkan jumlah {nama_menu}: "))
+                    harga = menu_df.loc[(menu_df["Stand"].str.lower() == stand.lower()) & 
+                                         (menu_df["Nama Menu"].str.lower() == nama_menu), "Harga"].values[0]
+                
+                    if nama_menu in keranjang:
+                        keranjang[nama_menu]["jumlah"] += jumlah
+                        keranjang[nama_menu]["total_harga"] += harga * jumlah
+                    else:
+                        keranjang[nama_menu] = {"jumlah": jumlah, "harga_satuan": harga, "total_harga": harga * jumlah}
+                    
+                    print(f"{jumlah} {nama_menu} ditambahkan ke keranjang.")
+                except ValueError:
+                    print("Jumlah harus berupa angka.")
+            else:
+                print("Menu tidak ditemukan di stand ini. Coba lagi.")
+
+        if input("Pilih stand lain? (y/n): ").lower() != "y":
             break
-        elif nama_menu in menu_df["Nama Menu"].str.lower().values:
-            try:
-                jumlah = int(input(f"Masukkan jumlah {nama_menu}: "))
-                harga = menu_df.loc[menu_df["Nama Menu"].str.lower() == nama_menu, "Harga"].values[0]
-                
-                if nama_menu in keranjang:
-                    keranjang[nama_menu]["jumlah"] += jumlah
-                    keranjang[nama_menu]["total_harga"] += harga * jumlah
-                else:
-                    keranjang[nama_menu] = {"jumlah": jumlah, "harga_satuan": harga, "total_harga": harga * jumlah}
-                
-                print(f"{jumlah} {nama_menu} ditambahkan ke keranjang.")
-            except ValueError:
-                print("Jumlah harus berupa angka.")
-        else:
-            print("Menu tidak ditemukan. Coba lagi.")
 
     if keranjang:
         print("\n=== Ringkasan Pesanan ===")
@@ -123,7 +151,6 @@ def main():
     menu_df = baca_menu_dari_csv()
     if menu_df.empty:
         return
-    tampilkan_menu(menu_df)
     buat_pesanan(menu_df)
 
 if __name__ == "__main__":
