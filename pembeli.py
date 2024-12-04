@@ -53,15 +53,31 @@ def animasi_proses():
     print("\nPesanan sedang dibuat dan akan dikirimkan ke alamatmu jika sudah siap!")
 
 def pilih_kecamatan():
-    kecamatan = {
-        "kaliwates": 15000,
-        "sumbersari": 12000,
-        "patrang": 15000
+    tarif = {
+        "kaliwates": {"cepat": 15000, "standar": 13000, "hemat": 11000},
+        "sumbersari": {"cepat": 10000, "standar": 8000, "hemat": 6000},
+        "patrang": {"cepat": 12000, "standar": 10000, "hemat": 8000},
     }
     while True:
         lokasi = input("Masukkan kecamatan (Kaliwates/Sumbersari/Patrang): ").lower()
-        if lokasi in kecamatan:
-            return lokasi, kecamatan[lokasi]
+        if lokasi in tarif:
+            while True:
+                print("\nOpsi pengiriman:")
+                print("1. Cepat (lebih mahal, lebih cepat)")
+                print("2. Standar (seimbang)")
+                print("3. Hemat (lebih murah, lebih lama)")
+                try:
+                    metode = int(input("Pilih metode pengiriman (1/2/3): "))
+                    if metode == 1:
+                        return lokasi, tarif[lokasi]["cepat"]
+                    elif metode == 2:
+                        return lokasi, tarif[lokasi]["standar"]
+                    elif metode == 3:
+                        return lokasi, tarif[lokasi]["hemat"]
+                    else:
+                        print("Pilihan tidak valid. Coba lagi.")
+                except ValueError:
+                    print("Input harus berupa angka. Coba lagi.")
         else:
             print("Kecamatan tidak tersedia. Silakan pilih antara Kaliwates, Sumbersari, atau Patrang.")
 
@@ -69,22 +85,19 @@ def hitung_total(keranjang, ongkir, voucher_df, kode_voucher=None):
     subtotal = sum(data["total_harga"] for data in keranjang.values()) 
     diskon = 0
     if kode_voucher:
-        # Mengecek apakah voucher ada di dalam data voucher
         if kode_voucher.upper() in voucher_df["Kode Voucher"].values:
             diskon_persen = voucher_df.loc[voucher_df["Kode Voucher"] == kode_voucher.upper(), "Diskon"].values[0]
-            diskon = subtotal * (diskon_persen / 100)
+            diskon = subtotal * (int(diskon_persen) / 100)
             print(f"Voucher {kode_voucher.upper()} diterapkan! Anda mendapatkan diskon {diskon_persen}%.")
         else:
             print("Voucher tidak valid atau tidak berlaku.")
     total = subtotal - diskon + ongkir
     return subtotal, diskon, total
-
         
 def tampilkan_menu(menu_df, stand):
     print(f"\n=== Menu di Stand {stand.capitalize()} ===")
     stand_menu = menu_df[menu_df["Stand"].str.lower() == stand.lower()]
     if not stand_menu.empty:
-        # Menampilkan menu dengan nomor urut dimulai dari 1
         for idx, (index, row) in enumerate(stand_menu.iterrows(), start=1):
             print(f"{idx}. {row['Nama Menu']} - Rp{row['Harga']}")
     else:
@@ -164,6 +177,12 @@ def buat_pesanan(menu_df):
                 )
                 print(f'Silahkan scan qrcode berikut dengan total {total}')
                 print(ascii_qr)
+                while True:
+                    validasi_bayar = input("Tekan 'enter' jika telah selesai melakukan pembayaran: ")
+                    if validasi_bayar == "":
+                        break
+                    else:
+                        print("Input tidak valid. Harap tekan 'enter' setelah selesai melakukan pembayaran.")
             animasi_proses()
             print("\nPesanan berhasil disimpan. Terima kasih!")
         else:
